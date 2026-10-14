@@ -1,0 +1,20 @@
+[project]
+name = "deep-learning-for-biology"
+version = "0.1.0"
+description = "Personal code and notes for studying Deep Learning for Biology."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "biopython",
+    "ipykernel",
+    "jupyterlab",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "scipy",
+    "torch",
+]
+
+[tool.uv]
+package = false
