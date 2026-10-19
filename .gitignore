@@ -15,6 +15,9 @@ __pycache__/
 data/
 outputs/
 
+# Local copies generated from the official notebooks
+/notebooks/chapter_*.ipynb
+
 # Local settings and secrets
 .env
 .env.*
