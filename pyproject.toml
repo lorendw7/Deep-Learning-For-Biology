@@ -52,6 +52,7 @@ dependencies = [
     "numba==0.61.2",
     "pyarrow==19.0.1",
     "scipy==1.15.3",
+    "safetensors==0.8.0",
     "setuptools==75.8.2",
     "tensorflow-metadata==1.16.1",
 ]
@@ -60,7 +61,7 @@ dependencies = [
 environments = ["sys_platform == 'win32'"]
 
 [tool.setuptools]
-py-modules = ["book_runtime"]
+py-modules = ["book_runtime", "resnet_compat"]
 
 [tool.uv.sources]
 dlfb = { git = "https://github.com/deep-learning-for-biology/dlfb.git", rev = "34809479cab19295902dcd70159dbb07f6ad403f" }

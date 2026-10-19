@@ -78,7 +78,8 @@ print(jax.devices())
 
 Call `configure()` before importing JAX, Flax, Transformers, or `dlfb`. It loads
 TensorFlow first, which avoids a Windows DLL failure seen when JAX is imported
-first. It also selects the CPU backend and sets local data and model-cache paths.
+first. It also selects the CPU backend, sets local data and model-cache paths,
+and enables the checked ResNet-18/34 weight loader described below.
 If JAX was already imported, restart the script or notebook kernel first.
 
 Run scripts from PyCharm or the repository terminal:
@@ -144,16 +145,54 @@ The first check downloads their weights into `data/huggingface/`. Later runs use
 the cache. The ESM check creates a small random model and does not download the
 large protein language model.
 
-The upstream ResNet-18/34 Flax checkpoints produce missing/unused-weight warnings
-with the official Transformers version. The chapter 5 check trains `SimpleCnn`;
-it does not validate those pretrained checkpoints for transfer learning.
-
 These checks verify the local runtime. They do not run full chapter datasets,
 long training jobs, or assess pretrained-model accuracy. CPU training on the full
 book projects can be slow.
 
 See the [verification record](docs/environment-verification.md) for the checks
 run on October 19, 2026.
+
+## ResNet-18/34 pretrained weights
+
+`book_runtime.configure()` now fixes the weight-loading issue in the official
+chapter 5 code. Restart any existing Python process or notebook kernel after
+updating this repository, then run `configure()` before importing the book code.
+The generated local notebooks already make this call.
+
+Transformers 4.49.0 names Flax basic-block layers `layer_0` and `layer_1`. The
+PyTorch checkpoints use `0` and `1`. The standard conversion misses those keys
+and can leave random weights in the backbone. `resnet_compat.py` fixes this name
+mapping before using the standard PyTorch-to-Flax tensor conversion. It checks
+every backbone key and shape and rejects missing or invalid tensors.
+
+The adapter uses these fixed Microsoft model revisions:
+
+| Model | Checkpoint revision |
+| --- | --- |
+| ResNet-18 | `65a5785d9156231087c481e0c7dd33a5ff6f7e3e` |
+| ResNet-34 | `4d180fbdc81b4d5d4eaa86ab89bdd669200dd477` |
+
+The ImageNet classifier is excluded because the book supplies its own skin-lesion
+head. PyTorch's batch counters are also excluded; all BatchNorm means and
+variances are loaded. No backbone weights are filled with random values and no
+loading warnings are hidden. ResNet-50 and other model IDs use the original loader.
+
+Run the detailed check:
+
+```powershell
+uv run --locked python scripts/check_pretrained_resnets.py
+```
+
+This compares all 100/180 Flax backbone tensors with the original PyTorch model,
+then compares feature maps and ImageNet logits on a public sample photo and
+fixed random input. It also checks weight transfer and inference through the
+book's `FinetunedResNet`. The first run downloads the sample photo; models are
+cached in `data/huggingface/`. Later runs can add `--offline`.
+
+Results are written to `outputs/verification/pretrained-resnets.json`. Both models
+passed with no loading warnings, matching Top-5 predictions, and a maximum logit
+difference below `7e-6`. This validates loading and inference, not skin-cancer
+prediction quality or a completed fine-tuning run.
 
 ## Windows changes
 
@@ -168,8 +207,9 @@ run on October 19, 2026.
 - JupyterLab 4.3.5, ipykernel 6.29.5, and IPython 8.18.1 work with the official
   Traitlets 5.7.1 constraint. Setuptools 75.8.2 keeps the older OGB dependency
   working.
-- The local startup call handles TensorFlow/JAX import order. The supporting
-  library itself is installed from its unchanged upstream commit.
+- The local startup call handles TensorFlow/JAX import order and the ResNet-18/34
+  conversion. The supporting library itself is installed from its unchanged
+  upstream commit. The small adapter is tied to Transformers 4.49.0.
 
 ## Study work
 

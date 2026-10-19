@@ -1,4 +1,4 @@
-"""Set local paths and load TensorFlow before JAX on Windows."""
+"""Set local paths, load libraries in order, and enable the book's model fixes."""
 
 import os
 from pathlib import Path
@@ -20,4 +20,7 @@ def configure(project_root: str | Path | None = None) -> Path:
     # TensorFlow 2.19 fails to load its native DLL after JAX 0.5.1 on this Windows host.
     import tensorflow  # noqa: F401
 
+    from resnet_compat import install_book_loader
+
+    install_book_loader()
     return root
